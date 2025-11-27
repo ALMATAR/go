@@ -283,99 +283,90 @@
     </div>
 
     <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyArFKjBYsFhsPyJPJpjLhH2eSEHlUFEzhI",
-            authDomain: "queue-717d5.firebaseapp.com",
-            databaseURL: "https://queue-717d5-default-rtdb.firebaseio.com",
-            projectId: "queue-717d5",
-            storageBucket: "queue-717d5.firebasestorage.app",
-            messagingSenderId: "837806460328",
-            appId: "1:837806460328:web:f2070b93a2784b1b25619d",
-            measurementId: "G-GM30LE46F6"
-        };
+const firebaseConfig = {
+    apiKey: "AIzaSyArFKjBYsFhsPyJPJpjLhH2eSEHlUFEzhI",
+    authDomain: "queue-717d5.firebaseapp.com",
+    databaseURL: "https://queue-717d5-default-rtdb.firebaseio.com",
+    projectId: "queue-717d5",
+    storageBucket: "queue-717d5.firebasestorage.app",
+    messagingSenderId: "837806460328",
+    appId: "1:837806460328:web:f2070b93a2784b1b25619d",
+    measurementId: "G-GM30LE46F6"
+};
 
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const firestore = firebase.firestore();
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const firestore = firebase.firestore();
 
-        let currentDoctor = null;
-        let currentTab = 'dashboard';
+let currentDoctor = null;
+let currentTab = 'dashboard';
 
-        // Auth check
-        auth.onAuthStateChanged(async (user) => {
-            if (!user) {
-                window.location.href = 'doctor-login.html';
-                return;
-            }
+auth.onAuthStateChanged(async (user) => {
+    if (!user) {
+        window.location.href = 'doctor-login.html';
+        return;
+    }
 
-            await loadDoctorData(user.email);
-        });
+    await loadDoctorData(user.email);
+});
 
-        async function loadDoctorData(email) {
-            try {
-                const doctorSnap = await firestore.collection('doctors')
-                    .where('email', '==', email)
-                    .get();
+async function loadDoctorData(email) {
+    try {
+        const doctorSnap = await firestore.collection('doctors')
+            .where('email', '==', email)
+            .get();
 
-                if (doctorSnap.empty) {
-                    alert('لم يتم العثور على بيانات الطبيب');
-                    auth.signOut();
-                    return;
-                }
-
-                currentDoctor = { id: doctorSnap.docs[0].id, ...doctorSnap.docs[0].data() };
-                
-                // Update UI
-                document.getElementById('doctorName').textContent = currentDoctor.name;
-                document.getElementById('doctorSpecialty').textContent = currentDoctor.specialty;
-                document.getElementById('regularLeave').textContent = currentDoctor.regularLeaveBalance || 0;
-                document.getElementById('casualLeave').textContent = currentDoctor.casualLeaveBalance || 0;
-                document.getElementById('absenceDays').textContent = currentDoctor.absenceDays || 0;
-
-                // Load data
-                await loadDashboardData();
-                await loadMonthOptions();
-                await loadReplacementDoctors();
-                listenForNotifications();
-            } catch (error) {
-                console.error('Error loading doctor data:', error);
-                alert('خطأ في تحميل البيانات');
-            }
+        if (doctorSnap.empty) {
+            alert('لم يتم العثور على بيانات الطبيب');
+            auth.signOut();
+            return;
         }
 
-        // Tab switching
-        function switchTab(tabName) {
-            // Hide all content
-            document.querySelectorAll('[id^="content-"]').forEach(el => el.classList.add('hidden'));
-            
-            // Remove active class from all tabs
-            document.querySelectorAll('[id^="tab-"]').forEach(el => {
-                el.classList.remove('tab-active', 'text-teal-600');
-                el.classList.add('text-gray-600');
-            });
-            
-            // Show selected content and activate tab
-            document.getElementById('content-' + tabName).classList.remove('hidden');
-            const tabBtn = document.getElementById('tab-' + tabName);
-            tabBtn.classList.add('tab-active', 'text-teal-600');
-            tabBtn.classList.remove('text-gray-600');
-            
-            currentTab = tabName;
-            
-            // Load data for specific tabs
-            if (tabName === 'attendance') {
-                loadAttendanceReport();
-            } else if (tabName === 'requests') {
-                loadRequests();
-            }
-        }
+        currentDoctor = { id: doctorSnap.docs[0].id, ...doctorSnap.docs[0].data() };
+        
+        // Update UI
+        document.getElementById('doctorName').textContent = currentDoctor.name;
+        document.getElementById('doctorSpecialty').textContent = currentDoctor.specialty;
+        document.getElementById('regularLeave').textContent = currentDoctor.regularLeaveBalance || 0;
+        document.getElementById('casualLeave').textContent = currentDoctor.casualLeaveBalance || 0;
+        document.getElementById('absenceDays').textContent = currentDoctor.absenceDays || 0;
 
-// ضع هذا الكود في نهاية script في doctor-dashboard.html
-// بعد السطر: // يتبع في الجزء التالي...
+        // Load data
+        await loadDashboardData();
+        await loadMonthOptions();
+        await loadReplacementDoctors();
+        listenForNotifications();
+    } catch (error) {
+        console.error('Error loading doctor data:', error);
+        alert('خطأ في تحميل البيانات');
+    }
+}
+
+function switchTab(tabName) {
+    document.querySelectorAll('[id^="content-"]').forEach(el => el.classList.add('hidden'));
+    
+    document.querySelectorAll('[id^="tab-"]').forEach(el => {
+        el.classList.remove('tab-active', 'text-teal-600');
+        el.classList.add('text-gray-600');
+    });
+    
+    document.getElementById('content-' + tabName).classList.remove('hidden');
+    const tabBtn = document.getElementById('tab-' + tabName);
+    tabBtn.classList.add('tab-active', 'text-teal-600');
+    tabBtn.classList.remove('text-gray-600');
+    
+    currentTab = tabName;
+    
+    if (tabName === 'attendance') {
+        loadAttendanceReport();
+    } else if (tabName === 'requests') {
+        loadRequests();
+    }
+}
 
 async function loadDashboardData() {
     try {
-        // Load pending requests count
+        // Load pending requests
         const pendingSnap = await firestore.collection('requests')
             .where('doctorId', '==', currentDoctor.id)
             .where('status', '==', 'قيد المراجعة')
@@ -398,7 +389,8 @@ async function loadDashboardData() {
             recentSnap.forEach(doc => {
                 const req = doc.data();
                 const date = req.submittedAt ? new Date(req.submittedAt.toDate()).toLocaleDateString('ar-EG') : '';
-                const statusColor = req.status === 'موافق' ? 'text-green-600' : req.status === 'مرفوض' ? 'text-red-600' : 'text-yellow-600';
+                const statusColor = req.status === 'موافق' ? 'text-green-600' : 
+                                   req.status === 'مرفوض' ? 'text-red-600' : 'text-yellow-600';
                 
                 activityDiv.innerHTML += `
                     <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
@@ -413,15 +405,14 @@ async function loadDashboardData() {
         }
     } catch (error) {
         console.error('Error loading dashboard:', error);
+        alert('خطأ في تحميل البيانات: ' + error.message);
     }
 }
 
-// Month selector for attendance
 function loadMonthOptions() {
     const select = document.getElementById('monthSelect');
     const now = new Date();
     
-    // Generate last 12 months
     for (let i = 0; i < 12; i++) {
         const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
         const monthStr = date.toLocaleDateString('ar-EG', { year: 'numeric', month: 'long' });
@@ -454,7 +445,6 @@ async function loadAttendanceReport() {
             return;
         }
 
-        // Calculate summary
         let present = 0, absent = 0, leave = 0, mission = 0;
         
         tbody.innerHTML = '';
@@ -488,6 +478,7 @@ async function loadAttendanceReport() {
         updateAttendanceSummary(present, absent, leave, mission);
     } catch (error) {
         console.error('Error loading attendance:', error);
+        alert('خطأ في تحميل التقرير: ' + error.message);
     }
 }
 
@@ -500,11 +491,10 @@ function updateAttendanceSummary(present, absent, leave, mission) {
 }
 
 function exportAttendance() {
-    // Simple CSV export
     const month = document.getElementById('monthSelect').value;
     const rows = document.querySelectorAll('#attendanceTableBody tr');
     
-    let csv = 'التاريخ,اليوم,الحضور,الانصراف,الحالة,الشيفت,ملاحظات\n';
+    let csv = '\ufeffالتاريخ,اليوم,الحضور,الانصراف,الحالة,الشيفت,ملاحظات\n';
     rows.forEach(row => {
         const cells = row.querySelectorAll('td');
         if (cells.length > 1) {
@@ -512,14 +502,13 @@ function exportAttendance() {
         }
     });
 
-    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     link.download = `attendance_${currentDoctor.name}_${month}.csv`;
     link.click();
 }
 
-// Load requests
 let currentFilter = 'all';
 
 async function loadRequests() {
@@ -537,7 +526,6 @@ async function loadRequests() {
         }
 
         const requestsSnap = await query.orderBy('submittedAt', 'desc').get();
-
         const listDiv = document.getElementById('requestsList');
         
         if (requestsSnap.empty) {
@@ -582,13 +570,13 @@ async function loadRequests() {
         });
     } catch (error) {
         console.error('Error loading requests:', error);
+        alert('خطأ في تحميل الطلبات: ' + error.message);
     }
 }
 
 function filterRequests(filter) {
     currentFilter = filter;
     
-    // Update button styles
     document.querySelectorAll('.filter-btn').forEach(btn => {
         btn.classList.remove('bg-teal-600', 'text-white', 'bg-gray-200');
         btn.classList.add('bg-gray-200');
@@ -599,7 +587,6 @@ function filterRequests(filter) {
     loadRequests();
 }
 
-// Load replacement doctors (same specialty)
 async function loadReplacementDoctors() {
     try {
         const doctorsSnap = await firestore.collection('doctors')
@@ -613,10 +600,7 @@ async function loadReplacementDoctors() {
         doctorsSnap.forEach(doc => {
             const doctor = doc.data();
             if (doc.id !== currentDoctor.id) {
-                const option = document.createElement('option');
-                option.value = doctor.name;
-                option.textContent = doctor.name;
-                select.appendChild(option);
+                select.innerHTML += `<option value="${doctor.name}">${doctor.name}</option>`;
             }
         });
     } catch (error) {
@@ -625,8 +609,7 @@ async function loadReplacementDoctors() {
 }
 
 function updateRequestForm() {
-    const type = document.getElementById('requestType').value;
-    // Could add specific form updates based on request type
+    // Can add specific form updates based on request type
 }
 
 function calculateDays() {
@@ -668,7 +651,6 @@ async function submitRequest() {
         return;
     }
 
-    // Check leave balance
     if (type === 'إجازة اعتيادية' && days > currentDoctor.regularLeaveBalance) {
         alert(`رصيدك من الإجازات الاعتيادية ${currentDoctor.regularLeaveBalance} يوم فقط`);
         return;
@@ -682,12 +664,12 @@ async function submitRequest() {
         await firestore.collection('requests').add({
             doctorId: currentDoctor.id,
             doctorName: currentDoctor.name,
-            type: type,
-            fromDate: fromDate,
-            toDate: toDate,
-            days: days,
-            replacement: replacement,
-            notes: notes,
+            type,
+            fromDate,
+            toDate,
+            days,
+            replacement,
+            notes,
             status: 'قيد المراجعة',
             adminResponse: '',
             submittedAt: firebase.firestore.FieldValue.serverTimestamp(),
@@ -695,9 +677,8 @@ async function submitRequest() {
             reviewedBy: ''
         });
 
-        alert('تم تقديم الطلب بنجاح! سيتم مراجعته من قبل الإدارة.');
+        alert('تم تقديم الطلب بنجاح!');
         
-        // Clear form
         document.getElementById('requestType').value = '';
         document.getElementById('fromDate').value = '';
         document.getElementById('toDate').value = '';
@@ -705,33 +686,37 @@ async function submitRequest() {
         document.getElementById('requestNotes').value = '';
         document.getElementById('daysCount').classList.add('hidden');
         
-        // Switch to requests tab
         switchTab('requests');
     } catch (error) {
-        console.error('Error submitting request:', error);
-        alert('خطأ في تقديم الطلب');
+        console.error('Error:', error);
+        alert('خطأ في تقديم الطلب: ' + error.message);
     }
 }
 
-// Notifications
 function listenForNotifications() {
-    // Listen for approved/rejected requests
     firestore.collection('requests')
         .where('doctorId', '==', currentDoctor.id)
         .where('status', 'in', ['موافق', 'مرفوض'])
         .onSnapshot(snapshot => {
             let newNotifications = 0;
+            const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
+            
             snapshot.forEach(doc => {
                 const req = doc.data();
-                if (req.reviewedAt && req.reviewedAt.toDate() > new Date(Date.now() - 24 * 60 * 60 * 1000)) {
+                if (req.reviewedAt && req.reviewedAt.toDate().getTime() > oneDayAgo) {
                     newNotifications++;
                 }
             });
             
+            const countEl = document.getElementById('notificationCount');
             if (newNotifications > 0) {
-                document.getElementById('notificationCount').textContent = newNotifications;
-                document.getElementById('notificationCount').classList.remove('hidden');
+                countEl.textContent = newNotifications;
+                countEl.classList.remove('hidden');
+            } else {
+                countEl.classList.add('hidden');
             }
+        }, error => {
+            console.error('Error listening notifications:', error);
         });
 }
 
@@ -770,6 +755,7 @@ async function showNotifications() {
         document.getElementById('notificationsModal').classList.remove('hidden');
     } catch (error) {
         console.error('Error loading notifications:', error);
+        alert('خطأ في تحميل الإشعارات: ' + error.message);
     }
 }
 
@@ -781,7 +767,6 @@ function logout() {
     if (confirm('هل تريد تسجيل الخروج؟')) {
         auth.signOut();
     }
-}
-    </script>
+}    </script>
 </body>
 </html>
