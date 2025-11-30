@@ -44,22 +44,22 @@
 
         /* تعديل ارتفاع شريط الأخبار */
         .news-ticker-container {
-            padding-top: 1.25rem;  /* py-5 */
+            padding-top: 1.25rem;
             padding-bottom: 1.25rem;
         }
 
         /* تعديل البنر الترويجي - على اليمين */
         .promo-banner {
             position: fixed;
-            bottom: 100px; /* فوق شريط الأخبار */
-            right: 20px; /* تغيير إلى اليمين */
+            bottom: 100px;
+            right: 20px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             padding: 20px;
             border-radius: 15px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.3);
             z-index: 40;
-            width: 350px; /* تكبير الحجم */
+            width: 350px;
             min-height: 200px;
             transform: translateX(150%);
             transition: transform 0.6s ease-in-out;
@@ -78,13 +78,19 @@
             transform: translateX(150%);
         }
 
-        /* prevent body scaling causing scrollbars */
+        /* منع التمرير */
         html, body { height: 100%; }
+        
+        /* عنصر رئيسي لاستهداف الزوم */
+        .main-content-wrapper {
+            transform-origin: top right;
+            transition: transform 0.3s ease;
+        }
     </style>
 </head>
 <body class="h-screen flex flex-col">
 
-    <!-- Top Bar -->
+    <!-- Top Bar - تم حذف الشاشات وزر ملء الشاشة -->
     <div class="bg-gradient-to-r from-blue-900 to-indigo-900 text-white px-6 py-3 flex items-center justify-between shadow-lg">
         <div class="flex items-center gap-4">
             <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -92,29 +98,20 @@
             </svg>
             <h1 id="centerName" class="text-2xl font-bold">المركز الطبي</h1>
         </div>
-        <div class="flex items-center gap-6">
-            <!-- Settings Menu Button -->
-            <button onclick="toggleSettingsMenu()" class="bg-white bg-opacity-20 hover:bg-opacity-30 p-2 rounded-lg transition-all">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                </svg>
-            </button>
-
-            <!-- تم حذف زراري الزووم من هنا -->
-            
-            <select id="screenSelect" class="bg-white text-gray-800 px-4 py-2 rounded-lg font-bold">
-                <option value="1">الشاشة 1</option>
-                <option value="2">الشاشة 2</option>
-                <option value="3">الشاشة 3</option>
-                <option value="4">الشاشة 4</option>
-            </select>
-            <div class="text-right">
-                <div id="currentTime" class="text-xl font-bold"></div>
-                <div id="currentDate" class="text-sm"></div>
+        <!-- التاريخ والوقت جنب بعض -->
+        <div class="flex items-center gap-4 text-right">
+            <div id="currentTime" class="text-3xl font-bold"></div>
+            <div class="text-sm">
+                <div id="currentDate" class="font-semibold"></div>
             </div>
-            <button onclick="toggleFullscreen()" id="fullscreenBtn" class="bg-white text-gray-800 px-3 py-2 rounded-lg font-bold">📺 تفعيل ملء الشاشة</button>
         </div>
+        <!-- زر الإعدادات فقط -->
+        <button onclick="toggleSettingsMenu()" class="bg-white bg-opacity-20 hover:bg-opacity-30 p-2 rounded-lg transition-all">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+            </svg>
+        </button>
     </div>
 
     <!-- Settings Menu -->
@@ -122,7 +119,6 @@
         <h3 class="text-xl font-bold text-gray-800 mb-4">إعدادات العرض</h3>
         
         <div class="space-y-4">
-            <!-- Screen Selection -->
             <div>
                 <label class="block text-gray-700 font-bold mb-2">رقم الشاشة:</label>
                 <select id="screenSelectMenu" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
@@ -133,7 +129,7 @@
                 </select>
             </div>
 
-            <!-- Zoom Controls -->
+            <!-- Zoom Controls متبقية فقط في القائمة -->
             <div>
                 <label class="block text-gray-700 font-bold mb-2">التكبير/التصغير:</label>
                 <div class="flex gap-2">
@@ -150,7 +146,6 @@
                 <p class="text-sm text-gray-600 mt-2 text-center">المستوى: <span id="zoomLevel">100%</span></p>
             </div>
 
-            <!-- Fullscreen -->
             <div>
                 <label class="block text-gray-700 font-bold mb-2">وضع ملء الشاشة:</label>
                 <button onclick="toggleFullscreen()" id="fullscreenBtnMenu" class="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 font-bold">
@@ -158,7 +153,6 @@
                 </button>
             </div>
 
-            <!-- Close Button -->
             <button onclick="toggleSettingsMenu()" class="w-full bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 font-bold">
                 إغلاق
             </button>
@@ -180,7 +174,7 @@
         </div>
     </div>
 
-    <!-- Promo Banner (Doctor Promotion) - التصميم الجديد -->
+    <!-- Promo Banner -->
     <div id="promoBanner" class="promo-banner">
         <div class="flex flex-col items-center justify-center h-full">
             <img id="promoDoctorImage" src="" alt="" class="w-24 h-24 rounded-full object-cover border-3 border-white mb-4">
@@ -191,8 +185,8 @@
         </div>
     </div>
 
-    <!-- Main Content -->
-    <div class="flex-1 flex overflow-hidden">
+    <!-- Main Content - تمت إضافة ال wrapper -->
+    <div class="main-content-wrapper flex-1 flex overflow-hidden">
         <!-- Clinics Column -->
         <div class="w-1/4 p-4 overflow-hidden flex flex-col">
             <div id="clinicsContainer" class="flex-1 space-y-3 overflow-hidden"></div>
@@ -283,18 +277,10 @@ const firestore = firebase.firestore(); // Firestore
             listenForAlerts();
             loadVideos();
             
-            // بدء البنرات الترويجية
             startPromoBanners();
-
-            document.getElementById('screenSelect').addEventListener('change', (e) => {
-                currentScreen = parseInt(e.target.value);
-                document.getElementById('screenSelectMenu').value = currentScreen;
-                loadClinics();
-            });
 
             document.getElementById('screenSelectMenu').addEventListener('change', (e) => {
                 currentScreen = parseInt(e.target.value);
-                document.getElementById('screenSelect').value = currentScreen;
                 loadClinics();
             });
 
@@ -359,12 +345,11 @@ const firestore = firebase.firestore(); // Firestore
             }, interval);
         }
 
-        // ** البنرات الترويجية - التوقيت الجديد **
         function startPromoBanners() {
-            showPromoBanner(); // عرض أول بنر فورياً
+            showPromoBanner();
             promoBannerInterval = setInterval(() => {
                 showPromoBanner();
-            }, 40000); // كل 40 ثانية (20 ظهور + 20 اختفاء)
+            }, 40000);
         }
 
         async function showPromoBanner() {
@@ -372,7 +357,6 @@ const firestore = firebase.firestore(); // Firestore
                 const today = new Date();
                 const dayName = today.toLocaleDateString('ar-EG', { weekday: 'long' });
                 
-                // جلب طبيب عشوائي من Firestore
                 const doctorsSnap = await firestore.collection('doctors')
                     .where('workStatus', '==', 'نشط')
                     .where('workDays', 'array-contains', dayName)
@@ -381,28 +365,23 @@ const firestore = firebase.firestore(); // Firestore
                 const banner = document.getElementById('promoBanner');
                 
                 if (doctorsSnap.empty) {
-                    // إخفاء البنر إذا لم يوجد أطباء
                     banner.classList.remove('show');
                     banner.classList.add('hide');
                     return;
                 }
 
-                // اختيار طبيب عشوائي
                 const randomIndex = Math.floor(Math.random() * doctorsSnap.docs.length);
                 const doctorDoc = doctorsSnap.docs[randomIndex];
                 const doctor = doctorDoc.data();
                 
-                // تعبئة البنر
                 document.getElementById('promoDoctorImage').src = doctor.imageUrl || 
                     `https://ui-avatars.com/api/?name=${encodeURIComponent(doctor.name)}&background=667eea&color=fff&size=80`;
                 document.getElementById('promoDoctorName').textContent = doctor.name;
                 document.getElementById('promoSpecialty').textContent = doctor.specialty || '';
 
-                // عرض البنر مع تأثير انزلاق
                 banner.classList.remove('hide');
                 banner.classList.add('show');
 
-                // إخفاء البنر بعد 20 ثانية
                 setTimeout(() => {
                     banner.classList.remove('show');
                     banner.classList.add('hide');
@@ -580,7 +559,6 @@ const firestore = firebase.firestore(); // Firestore
             }
         }
 
-        // ** تم إرجاع الكود السابق لجلب الفيديوهات - بدون Firebase Storage **
         function loadVideos() {
             db.ref('settings').once('value', (snapshot) => {
                 const settings = snapshot.val() || {};
@@ -714,13 +692,13 @@ const firestore = firebase.firestore(); // Firestore
             }
         }
 
-        // ** تعديل: Zoom بمعدل 1/25 (0.04) - مطابق للمطلوب **
+        // ** تم إصلاح مشكلة الزوم: استهداف الـ wrapper الرئيسي **
         let zoomLevel = 1;
         const minZoom = 0.5;
         const maxZoom = 2.5;
 
         function zoomIn() {
-            zoomLevel = Math.min(maxZoom, +(zoomLevel + 0.04).toFixed(2)); // تغيير بمقدار 0.04
+            zoomLevel = Math.min(maxZoom, +(zoomLevel + 0.04).toFixed(2));
             applyZoom();
         }
 
@@ -735,12 +713,12 @@ const firestore = firebase.firestore(); // Firestore
         }
 
         function applyZoom() {
-            // تطبيق التكبير على المناطق الرئيسية
-            const mainAreas = document.querySelectorAll('.flex-1, .w-1/4');
-            mainAreas.forEach(el => {
-                el.style.transform = `scale(${zoomLevel})`;
-                el.style.transformOrigin = 'top right';
-            });
+            // استهداف العنصر الرئيسي المحتوي على كل المحتوى
+            const mainWrapper = document.querySelector('.main-content-wrapper');
+            if (mainWrapper) {
+                mainWrapper.style.transform = `scale(${zoomLevel})`;
+                mainWrapper.style.transformOrigin = 'top right';
+            }
             document.getElementById('zoomLevel').textContent = Math.round(zoomLevel * 100) + '%';
         }
 
@@ -754,7 +732,6 @@ const firestore = firebase.firestore(); // Firestore
             }
         });
 
-        // تنظيف الـ interval عند إغلاق الصفحة
         window.addEventListener('beforeunload', () => {
             if (promoBannerInterval) clearInterval(promoBannerInterval);
             if (newsTickerInterval) clearInterval(newsTickerInterval);
