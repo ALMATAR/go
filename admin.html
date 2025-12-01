@@ -1965,7 +1965,28 @@ document.getElementById('attendanceDate').valueAsDate = new Date();
 
 
 
+// دالة إرسال أوامر الفيديو من لوحة الإدارة
+function videoControl(action) {
+    db.ref('videoControl').push({
+        action: action,
+        timestamp: firebase.database.ServerValue.TIMESTAMP
+    });
+    // عرض رسالة صغيرة للتأكيد
+    const btn = event.target;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = 'تم ✔️';
+    setTimeout(() => btn.innerHTML = originalText, 1000);
+}
 
+// دالة التحكم في الصوت
+function setVideoVolume(value) {
+    document.getElementById('videoVolumeDisplay').innerText = value + '%';
+    db.ref('videoControl').push({
+        action: 'volume',
+        value: value,
+        timestamp: firebase.database.ServerValue.TIMESTAMP
+    });
+}
 
 
 
