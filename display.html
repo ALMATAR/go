@@ -333,28 +333,53 @@
 
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 
-        window.onload = function() {
-            updateDateTime();
-            setInterval(updateDateTime, 1000);
+        
+// في display.html داخل <script>
+window.onload = function() {
+    updateDateTime();
+    setInterval(updateDateTime, 1000);
 
-            loadSettings();
-            loadClinics();
-            listenForCalls();
-            listenForAlerts();
-            loadVideos();
+    loadSettings();
+    loadClinics();
+    listenForCalls();
+    listenForAlerts();
+    loadVideos();
+    
+    // --- الإضافات الضرورية ---
+    initDoctorSlider();
+    listenForVideoControls(); // إصلاح تحكم الفيديو
+    listenForInstantAudio();  // إصلاح النطق الجاهز
+    // ------------------------
+
+    document.getElementById('screenSelectMenu').addEventListener('change', (e) => {
+        currentScreen = parseInt(e.target.value);
+        loadClinics();
+    });
+
+    updatePlayPauseIcons();
+    updateMuteIcons();
+};
+
+
+// أضف هذه الدالة في display.html
+function listenForInstantAudio() {
+    db.ref('instantAudio').limitToLast(1).on('child_added', (snapshot) => {
+        const data = snapshot.val();
+        // التأكد أن الأمر جديد (أقل من 10 ثواني)
+        if (Date.now() - data.timestamp < 10000) {
+            // تشغيل الملف الصوتي
+            const audio = new Audio(audioPath + data.file);
+            audio.play().catch(e => console.error("Error playing instant audio:", e));
             
-            // Initialize new doctor slider
-            initDoctorSlider();
+            // عرض إشعار أيضاً (اختياري)
+            showNotification("⚠️ تنبيه إداري", new Date().toLocaleTimeString('ar-EG'));
+        }
+    });
+}
 
-            document.getElementById('screenSelectMenu').addEventListener('change', (e) => {
-                currentScreen = parseInt(e.target.value);
-                loadClinics();
-            });
 
-            updatePlayPauseIcons();
-            updateMuteIcons();
-        };
 
+        
         function updateDateTime() {
             const now = new Date();
             const timeStr = now.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
