@@ -9,7 +9,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
         body { font-family: 'Cairo', sans-serif; }
@@ -240,6 +240,35 @@
             </div>
         </div>
 
+
+
+<div class="bg-white rounded-lg shadow-md p-6 mb-6">
+    <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-bold text-gray-800">إدارة الحجوزات والمواعيد</h2>
+        <button onclick="loadAppointments()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">تحديث</button>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="w-full text-right border-collapse">
+            <thead class="bg-gray-100">
+                <tr>
+                    <th class="p-3 border">الاسم</th>
+                    <th class="p-3 border">العيادة</th>
+                    <th class="p-3 border">التاريخ/الوقت</th>
+                    <th class="p-3 border">الهاتف</th>
+                    <th class="p-3 border">السبب</th>
+                    <th class="p-3 border">الحالة</th>
+                    <th class="p-3 border">إجراء</th>
+                </tr>
+            </thead>
+            <tbody id="appointmentsListBody">
+                <tr><td colspan="7" class="text-center p-4">جاري التحميل...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+        
         <!-- Call Statistics & Reports -->
         <div class="bg-white rounded-lg shadow-md p-6 mb-6">
             <div class="flex justify-between items-center mb-4">
@@ -1161,7 +1190,58 @@ const firestore = firebase.firestore(); // Firestore
                 document.getElementById('doctorModal').classList.remove('hidden');
             });
         }
+function loadStatistics() {
+    // إزالة الفلتر الزمني مؤقتاً لعرض كل البيانات للتجربة
+    // أو استخدم: const timestampStart = new Date().setHours(0,0,0,0); لبيانات اليوم
+    
+    db.ref('calls').limitToLast(100).once('value', (snapshot) => {
+        const calls = snapshot.val();
+        
+        if (!calls) {
+            document.getElementById('totalCalls').innerText = "0";
+            document.getElementById('clinicStatistics').innerHTML = '<p class="text-gray-500 text-center">لا توجد بيانات نداء مسجلة.</p>';
+            return;
+        }
 
+        const callsArray = Object.values(calls);
+        document.getElementById('totalCalls').innerText = callsArray.length;
+
+        const clinicCounts = {};
+        callsArray.forEach(call => {
+            const name = call.clinicName || 'عيادة غير معروفة';
+            clinicCounts[name] = (clinicCounts[name] || 0) + 1;
+        });
+
+        document.getElementById('activeClinics').innerText = Object.keys(clinicCounts).length;
+
+        // الأكثر نشاطاً
+        let maxCalls = 0;
+        let topClinic = '--';
+        for (const [name, count] of Object.entries(clinicCounts)) {
+            if (count > maxCalls) {
+                maxCalls = count;
+                topClinic = name;
+            }
+        }
+        document.getElementById('mostActiveClinic').innerText = topClinic;
+
+        // عرض التفاصيل
+        const detailsDiv = document.getElementById('clinicStatistics');
+        detailsDiv.innerHTML = '';
+        for (const [name, count] of Object.entries(clinicCounts)) {
+            detailsDiv.innerHTML += `
+                <div class="flex justify-between items-center bg-gray-50 p-3 rounded mb-2">
+                    <span class="font-bold text-gray-700">${name}</span>
+                    <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-bold">${count} نداء</span>
+                </div>
+            `;
+        }
+        
+        // حساب متوسط الوقت (بسيط)
+        // يتم حسابه بناء على الفرق بين النداءات لنفس العيادة
+        document.getElementById('avgWaitTime').innerText = "تقديري"; 
+    });
+}
         function saveDoctor() {
             const id = document.getElementById('editDoctorId').value;
             const name = document.getElementById('doctorName').value;
@@ -1310,7 +1390,135 @@ const firestore = firebase.firestore(); // Firestore
         }
 
 
+// --- دالة عرض المواعيد ---
+async function loadAppointments() {
+    const tbody = document.getElementById('appointmentsListBody');
+    tbody.innerHTML = '<tr><td colspan="7" class="text-center p-4">جاري التحميل...</td></tr>';
 
+    try {
+        // جلب المواعيد مرتبة حسب التاريخ (الأحدث أولاً)
+        const snapshot = await firestore.collection('appointments')
+            .orderBy('date', 'desc')
+            .orderBy('time', 'asc')
+            .limit(50)
+            .get();
+
+        if (snapshot.empty) {
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center p-4">لا توجد حجوزات</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = '';
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            const row = `
+                <tr class="border-b hover:bg-gray-50">
+                    <td class="p-3">${data.clientName}</td>
+                    <td class="p-3">${data.clinicName}</td>
+                    <td class="p-3">
+                        <div class="font-bold">${data.date}</div>
+                        <div class="text-sm text-gray-500">${data.time} (${data.shift})</div>
+                    </td>
+                    <td class="p-3">${data.phone}</td>
+                    <td class="p-3 text-sm">${data.reason.substring(0, 30)}...</td>
+                    <td class="p-3">
+                        <span class="px-2 py-1 rounded text-xs font-bold ${data.status === 'محجوز' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                            ${data.status}
+                        </span>
+                    </td>
+                    <td class="p-3">
+                        <button onclick="deleteAppointment('${doc.id}')" class="text-red-600 hover:text-red-800 font-bold text-sm">حذف</button>
+                    </td>
+                </tr>
+            `;
+            tbody.innerHTML += row;
+        });
+    } catch (error) {
+        console.error("Error loading appointments:", error);
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center p-4 text-red-600">خطأ في تحميل البيانات</td></tr>';
+    }
+}
+
+async function deleteAppointment(id) {
+    if(confirm('هل أنت متأكد من حذف هذا الموعد؟')) {
+        await firestore.collection('appointments').doc(id).delete();
+        loadAppointments();
+    }
+}
+
+// استدعاء الدالة عند بدء التشغيل (أضفها داخل auth.onAuthStateChanged)
+// loadAppointments();
+
+
+// --- دالة رفع ملف Excel للحضور ---
+async function uploadAttendanceExcel() {
+    const fileInput = document.getElementById('excelFile');
+    const file = fileInput.files[0];
+    
+    if (!file) {
+        alert('يرجى اختيار ملف Excel (.xlsx أو .csv)');
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+        try {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, {type: 'array'});
+            
+            // قراءة أول ورقة عمل
+            const firstSheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[firstSheetName];
+            
+            // تحويل إلى JSON
+            const jsonData = XLSX.utils.sheet_to_json(worksheet);
+            
+            if (jsonData.length === 0) {
+                alert('الملف فارغ!');
+                return;
+            }
+
+            let successCount = 0;
+            
+            // مثال لهيكل الملف المتوقع:
+            // EmployeeID | Date | CheckIn | CheckOut | Status | Shift
+            
+            for (const row of jsonData) {
+                // البحث عن الطبيب باستخدام رقم الموظف (إذا وجد)
+                // هنا سنقوم بإضافة السجل مباشرة ونحاول ربطه لاحقاً أو نعتمد على الاسم
+                
+                // تنظيف البيانات
+                const attendanceData = {
+                    employeeNumber: row['رقم الموظف'] || row['EmployeeID'] || 'Unknown',
+                    date: row['التاريخ'] || row['Date'], // يجب أن يكون YYYY-MM-DD
+                    checkIn: row['حضور'] || row['CheckIn'] || null,
+                    checkOut: row['انصراف'] || row['CheckOut'] || null,
+                    status: row['الحالة'] || row['Status'] || 'حاضر',
+                    shift: row['الشيفت'] || row['Shift'] || 'صباحي',
+                    notes: 'تم الرفع عبر Excel',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+
+                // محاولة استخراج الشهر للتقارير
+                if (attendanceData.date) {
+                    attendanceData.month = attendanceData.date.substring(0, 7);
+                    
+                    // حفظ في Firestore
+                    await firestore.collection('attendance').add(attendanceData);
+                    successCount++;
+                }
+            }
+            
+            alert(`تم رفع ${successCount} سجل حضور بنجاح!`);
+            fileInput.value = ''; // تفريغ الحقل
+            
+        } catch (error) {
+            console.error('Excel Error:', error);
+            alert('حدث خطأ أثناء قراءة الملف. تأكد من الصيغة.');
+        }
+    };
+    reader.readAsArrayBuffer(file);
+}
 
 
 // أضف هذا الكود في نهاية script في admin.html
